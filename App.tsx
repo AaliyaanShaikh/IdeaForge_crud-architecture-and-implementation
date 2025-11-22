@@ -24,6 +24,8 @@ const INITIAL_IDEAS: Idea[] = [
   }
 ];
 
+type SortOption = 'newest' | 'oldest' | 'alphabetical';
+
 const App: React.FC = () => {
   // State
   const [ideas, setIdeas] = useState<Idea[]>(() => {
@@ -32,6 +34,7 @@ const App: React.FC = () => {
   });
   
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortOption, setSortOption] = useState<SortOption>('newest');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingIdea, setEditingIdea] = useState<Idea | undefined>(undefined);
 
@@ -83,12 +86,22 @@ const App: React.FC = () => {
   // Derived State
   const filteredIdeas = useMemo(() => {
     const lowerTerm = searchTerm.toLowerCase();
-    return ideas.filter(idea => 
+    
+    // Filter
+    const filtered = ideas.filter(idea => 
       idea.title.toLowerCase().includes(lowerTerm) ||
       idea.description.toLowerCase().includes(lowerTerm) ||
       idea.tags.some(tag => tag.toLowerCase().includes(lowerTerm))
     );
-  }, [ideas, searchTerm]);
+
+    // Sort
+    return filtered.sort((a, b) => {
+      if (sortOption === 'newest') return b.updatedAt - a.updatedAt;
+      if (sortOption === 'oldest') return a.updatedAt - b.updatedAt;
+      if (sortOption === 'alphabetical') return a.title.localeCompare(b.title);
+      return 0;
+    });
+  }, [ideas, searchTerm, sortOption]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -104,18 +117,30 @@ const App: React.FC = () => {
             </h1>
           </div>
 
-          {/* Desktop Search */}
-          <div className="hidden md:block max-w-md w-full mx-8 relative group">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-500 transition-colors">
-              <SearchIcon className="w-5 h-5" />
+          {/* Desktop Search & Controls */}
+          <div className="hidden md:flex items-center space-x-4 flex-1 max-w-2xl mx-8">
+            <div className="relative flex-1 group">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-500 transition-colors">
+                <SearchIcon className="w-5 h-5" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search ideas..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-lg leading-5 bg-slate-50 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all"
+              />
             </div>
-            <input
-              type="text"
-              placeholder="Search ideas..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-lg leading-5 bg-slate-50 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all"
-            />
+            
+            <select
+              value={sortOption}
+              onChange={(e) => setSortOption(e.target.value as SortOption)}
+              className="block w-40 pl-3 pr-8 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 text-slate-700"
+            >
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+              <option value="alphabetical">A-Z</option>
+            </select>
           </div>
 
           <button
@@ -123,12 +148,12 @@ const App: React.FC = () => {
             className="hidden md:flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium text-sm shadow-md shadow-indigo-200 transition-all hover:shadow-lg hover:-translate-y-0.5"
           >
             <PlusIcon className="w-5 h-5" />
-            <span>New</span>
+            <span>New Idea</span>
           </button>
         </div>
         
-        {/* Mobile Search Bar (Visible only on small screens) */}
-        <div className="md:hidden px-4 py-3 border-t border-slate-100 bg-slate-50">
+        {/* Mobile Controls */}
+        <div className="md:hidden px-4 py-3 border-t border-slate-100 bg-slate-50 space-y-3">
            <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
               <SearchIcon className="w-5 h-5" />
@@ -141,20 +166,39 @@ const App: React.FC = () => {
               className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-lg leading-5 bg-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
             />
           </div>
+          <div className="flex justify-between items-center">
+             <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Sort by:</span>
+             <select
+              value={sortOption}
+              onChange={(e) => setSortOption(e.target.value as SortOption)}
+              className="block w-1/2 pl-2 pr-6 py-1.5 text-xs border border-slate-200 rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            >
+              <option value="newest">Newest</option>
+              <option value="oldest">Oldest</option>
+              <option value="alphabetical">A-Z</option>
+            </select>
+          </div>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg font-semibold text-slate-800">
+             {searchTerm ? 'Search Results' : 'Your Ideas'}
+             <span className="ml-2 text-sm font-normal text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">{filteredIdeas.length}</span>
+          </h2>
+        </div>
+
         {filteredIdeas.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64 text-center">
-            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+          <div className="flex flex-col items-center justify-center h-64 text-center border-2 border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm">
               <SparklesIcon className="w-8 h-8 text-slate-300" />
             </div>
             <h3 className="text-lg font-medium text-slate-900">No ideas found</h3>
             <p className="text-slate-500 mt-1 max-w-xs">
               {searchTerm 
-                ? `No results matching "${searchTerm}". Try a different term.` 
+                ? `No results matching "${searchTerm}".` 
                 : "Get started by creating your first big idea!"}
             </p>
             {!searchTerm && (
@@ -162,7 +206,15 @@ const App: React.FC = () => {
                 onClick={openCreateModal}
                 className="mt-4 text-indigo-600 font-medium hover:text-indigo-700"
                >
-                 Create now &rarr;
+                 Create an idea now &rarr;
+               </button>
+            )}
+             {searchTerm && (
+               <button
+                onClick={() => setSearchTerm('')}
+                className="mt-4 text-indigo-600 font-medium hover:text-indigo-700"
+               >
+                 Clear search
                </button>
             )}
           </div>

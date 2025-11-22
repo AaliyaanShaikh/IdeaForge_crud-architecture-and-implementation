@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Idea, IdeaFormData } from '../types';
 import { SparklesIcon, XMarkIcon } from './Icons';
 import { enhanceIdeaWithAI } from '../services/geminiService';
@@ -12,7 +12,8 @@ interface IdeaFormProps {
 const IdeaForm: React.FC<IdeaFormProps> = ({ initialData, onSubmit, onCancel }) => {
   const [title, setTitle] = useState(initialData?.title || '');
   const [description, setDescription] = useState(initialData?.description || '');
-  const [tags, setTags] = useState<string>(initialData?.tags.join(', ') || '');
+  const [tags, setTags] = useState<string[]>(initialData?.tags || []);
+  const [tagInput, setTagInput] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,12 +29,31 @@ const IdeaForm: React.FC<IdeaFormProps> = ({ initialData, onSubmit, onCancel }) 
     try {
       const result = await enhanceIdeaWithAI(title);
       setDescription(result.description);
-      setTags(result.tags.join(', '));
+      // Merge new tags with existing ones, avoiding duplicates
+      const newTags = Array.from(new Set([...tags, ...result.tags]));
+      setTags(newTags);
     } catch (err) {
       setError("Failed to generate content. Please try again.");
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      const newTag = tagInput.trim();
+      if (newTag && !tags.includes(newTag)) {
+        setTags([...tags, newTag]);
+        setTagInput('');
+      }
+    } else if (e.key === 'Backspace' && !tagInput && tags.length > 0) {
+      setTags(tags.slice(0, -1));
+    }
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    setTags(tags.filter(tag => tag !== tagToRemove));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -43,12 +63,15 @@ const IdeaForm: React.FC<IdeaFormProps> = ({ initialData, onSubmit, onCancel }) 
       return;
     }
     
-    const tagArray = tags.split(',').map(t => t.trim()).filter(t => t.length > 0);
-    
+    // Add pending tag if exists
+    const finalTags = tagInput.trim() && !tags.includes(tagInput.trim()) 
+      ? [...tags, tagInput.trim()] 
+      : tags;
+
     onSubmit({
       title,
       description,
-      tags: tagArray
+      tags: finalTags
     });
   };
 
@@ -57,7 +80,7 @@ const IdeaForm: React.FC<IdeaFormProps> = ({ initialData, onSubmit, onCancel }) 
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
         <div className="flex items-center justify-between p-6 border-b border-slate-100">
           <h2 className="text-xl font-bold text-slate-800">
-            {initialData ? 'Edit' : 'New'}
+            {initialData ? 'Edit Idea' : 'New Idea'}
           </h2>
           <button onClick={onCancel} className="text-slate-400 hover:text-slate-600 transition-colors">
             <XMarkIcon />
@@ -114,15 +137,31 @@ const IdeaForm: React.FC<IdeaFormProps> = ({ initialData, onSubmit, onCancel }) 
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="tags" className="block text-sm font-medium text-slate-700">Tags (comma separated)</label>
-            <input
-              id="tags"
-              type="text"
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
-              placeholder="business, green, local"
-            />
+            <label htmlFor="tags" className="block text-sm font-medium text-slate-700">Tags</label>
+            <div className="w-full px-3 py-2 rounded-lg border border-slate-300 focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-indigo-500 transition-all bg-white flex flex-wrap gap-2 min-h-[42px]">
+              {tags.map(tag => (
+                <span key={tag} className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-indigo-50 text-indigo-700">
+                  {tag}
+                  <button
+                    type="button"
+                    onClick={() => removeTag(tag)}
+                    className="ml-1 text-indigo-400 hover:text-indigo-900"
+                  >
+                    <XMarkIcon className="w-3 h-3" />
+                  </button>
+                </span>
+              ))}
+              <input
+                id="tags"
+                type="text"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={handleAddTag}
+                className="flex-grow outline-none min-w-[100px] bg-transparent text-sm"
+                placeholder={tags.length === 0 ? "Type and press Enter..." : ""}
+              />
+            </div>
+            <p className="text-xs text-slate-400">Press Enter or comma to add a tag</p>
           </div>
         </form>
 
@@ -138,7 +177,7 @@ const IdeaForm: React.FC<IdeaFormProps> = ({ initialData, onSubmit, onCancel }) 
             onClick={handleSubmit}
             className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium shadow-sm shadow-indigo-200 transition-all transform active:scale-95"
           >
-            {initialData ? 'Update' : 'Create'}
+            {initialData ? 'Update Idea' : 'Create Idea'}
           </button>
         </div>
       </div>

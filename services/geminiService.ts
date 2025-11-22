@@ -1,9 +1,8 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { AIResponse } from "../types";
 
-const apiKey = process.env.API_KEY;
-// Initialize lazily to ensure environment variables are ready, though in this setup they are injected globally.
-const ai = new GoogleGenAI({ apiKey: apiKey || 'DUMMY_KEY_FOR_TYPES' });
+// The API key is strictly obtained from the environment variable.
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const SYSTEM_INSTRUCTION = `
 You are an intelligent assistant for an "Idea Management" application.
@@ -13,10 +12,6 @@ Generate 3-5 relevant, single-word tags.
 `;
 
 export const enhanceIdeaWithAI = async (title: string): Promise<AIResponse> => {
-  if (!apiKey) {
-    throw new Error("API Key is missing. Please check your environment.");
-  }
-
   const model = "gemini-2.5-flash";
   
   try {
