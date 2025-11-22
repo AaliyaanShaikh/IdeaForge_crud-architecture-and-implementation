@@ -1,0 +1,5 @@
+{
+  "name": "IdeaForge AI",
+  "description": "A smart CRUD application for managing ideas. Create, read, update, and delete notes with AI-powered content expansion and tagging capabilities.",
+  "requestFramePermissions": []
+}
