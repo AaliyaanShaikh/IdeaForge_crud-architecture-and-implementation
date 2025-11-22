@@ -148,7 +148,7 @@ const App: React.FC = () => {
             className="hidden md:flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium text-sm shadow-md shadow-indigo-200 transition-all hover:shadow-lg hover:-translate-y-0.5"
           >
             <PlusIcon className="w-5 h-5" />
-            <span>New Idea</span>
+            <span>New</span>
           </button>
         </div>
         
@@ -206,7 +206,7 @@ const App: React.FC = () => {
                 onClick={openCreateModal}
                 className="mt-4 text-indigo-600 font-medium hover:text-indigo-700"
                >
-                 Create an idea now &rarr;
+                 Create now &rarr;
                </button>
             )}
              {searchTerm && (

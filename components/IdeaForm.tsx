@@ -80,7 +80,7 @@ const IdeaForm: React.FC<IdeaFormProps> = ({ initialData, onSubmit, onCancel }) 
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
         <div className="flex items-center justify-between p-6 border-b border-slate-100">
           <h2 className="text-xl font-bold text-slate-800">
-            {initialData ? 'Edit Idea' : 'New Idea'}
+            {initialData ? 'Edit' : 'New'}
           </h2>
           <button onClick={onCancel} className="text-slate-400 hover:text-slate-600 transition-colors">
             <XMarkIcon />
@@ -177,7 +177,7 @@ const IdeaForm: React.FC<IdeaFormProps> = ({ initialData, onSubmit, onCancel }) 
             onClick={handleSubmit}
             className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium shadow-sm shadow-indigo-200 transition-all transform active:scale-95"
           >
-            {initialData ? 'Update Idea' : 'Create Idea'}
+            {initialData ? 'Update' : 'Create'}
           </button>
         </div>
       </div>
